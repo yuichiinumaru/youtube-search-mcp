@@ -1,0 +1,26 @@
+[project]
+name = "youtube-ultimate-mcp"
+version = "0.1.0"
+description = "The Ultimate YouTube MCP Server"
+dependencies = [
+    "fastmcp>=0.1.0",
+    "google-api-python-client>=2.0.0",
+    "youtube-search-python>=1.6.6",
+    "youtube-transcript-api>=0.6.0",
+    "yt-dlp>=2023.0.0",
+    "lancedb>=0.5.0",
+    "sentence-transformers>=2.2.0",
+    "numpy>=1.24.0",
+    "tantivy>=0.2.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+    "pandas>=2.0.0"
+]
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
