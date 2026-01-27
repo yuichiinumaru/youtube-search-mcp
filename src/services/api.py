@@ -21,22 +21,26 @@ class YouTubeAPI:
     def is_available(self) -> bool:
         return self.client is not None
 
-    def search(self, query: str, max_results: int = 10, search_type: str = "video") -> List[Dict[str, Any]]:
+    def search(self, query: str, max_results: int = 10, search_type: str = "video", **kwargs) -> List[Dict[str, Any]]:
         """
         Search for resources on YouTube.
         search_type: 'video', 'channel', 'playlist'
+        kwargs: Additional parameters like 'location', 'locationRadius'
         """
         if not self.is_available():
             logger.warning("YouTube API not available.")
             return []
 
         try:
-            request = self.client.search().list(
-                q=query,
-                part="snippet",
-                maxResults=max_results,
-                type=search_type
-            )
+            api_kwargs = {
+                "q": query,
+                "part": "snippet",
+                "maxResults": max_results,
+                "type": search_type
+            }
+            api_kwargs.update(kwargs)
+
+            request = self.client.search().list(**api_kwargs)
             response = request.execute()
 
             results = []
@@ -144,4 +148,65 @@ class YouTubeAPI:
             return results
         except HttpError as e:
             logger.error(f"YouTube API Playlist Items error: {e}")
+            return []
+
+    def get_trending_videos(self, region_code: str = "US", max_results: int = 10, category_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get trending videos for a region and optional category.
+        """
+        if not self.is_available():
+            return []
+
+        try:
+            kwargs = {
+                "part": "snippet,statistics,contentDetails",
+                "chart": "mostPopular",
+                "regionCode": region_code,
+                "maxResults": max_results
+            }
+            if category_id:
+                kwargs["videoCategoryId"] = category_id
+
+            request = self.client.videos().list(**kwargs)
+            response = request.execute()
+
+            results = []
+            for item in response.get("items", []):
+                results.append({
+                    "id": item["id"],
+                    "title": item["snippet"]["title"],
+                    "channelTitle": item["snippet"]["channelTitle"],
+                    "viewCount": int(item["statistics"].get("viewCount", 0)),
+                    "publishedAt": item["snippet"]["publishedAt"],
+                    "thumbnail": item["snippet"]["thumbnails"].get("high", {}).get("url")
+                })
+            return results
+        except HttpError as e:
+            logger.error(f"YouTube API Trending error: {e}")
+            return []
+
+    def get_comments(self, video_id: str, max_results: int = 20) -> List[str]:
+        """
+        Get top comments for a video.
+        """
+        if not self.is_available():
+            return []
+
+        try:
+            request = self.client.commentThreads().list(
+                part="snippet",
+                videoId=video_id,
+                maxResults=max_results,
+                textFormat="plainText",
+                order="relevance"
+            )
+            response = request.execute()
+
+            comments = []
+            for item in response.get("items", []):
+                comment = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+                comments.append(comment)
+            return comments
+        except HttpError as e:
+            logger.error(f"YouTube API Comments error: {e}")
             return []

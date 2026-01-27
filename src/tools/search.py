@@ -39,7 +39,29 @@ def get_channel_details(channel_id: str) -> Dict[str, Any]:
             return results[0]
     return {"error": "API not available or Channel not found"}
 
+def search_videos_by_location(query: str, location: str, location_radius: str, max_results: int = 10) -> List[Dict[str, Any]]:
+    """
+    Search for videos by location.
+    location: Latitude/Longitude (e.g., "37.42307,-122.08427")
+    location_radius: Radius (e.g., "5km")
+    """
+    if api.is_available():
+        return api.search(query, max_results, search_type="video", location=location, locationRadius=location_radius)
+    return {"error": "API not available (Required for Geo-Search)"}
+
+def get_trending_videos(region_code: str = "US", category_id: str = None) -> List[Dict[str, Any]]:
+    """
+    Get trending videos.
+    """
+    if api.is_available():
+        return api.get_trending_videos(region_code, category_id=category_id)
+    else:
+        logger.info("Fetching trending via scraper (Region code ignored)")
+        return scraper.get_trending_videos()
+
 def register(mcp):
     mcp.tool()(search_videos)
     mcp.tool()(get_video_details)
     mcp.tool()(get_channel_details)
+    mcp.tool()(search_videos_by_location)
+    mcp.tool()(get_trending_videos)

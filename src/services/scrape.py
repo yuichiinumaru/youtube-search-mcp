@@ -85,3 +85,16 @@ class YouTubeScraper:
         except Exception as e:
             logger.error(f"RSS Feed error: {e}")
             return []
+
+    def get_trending_videos(self) -> List[Dict[str, Any]]:
+        """
+        Get trending videos using youtube-search-python.
+        Note: The library doesn't seem to export Trending class directly in this version.
+        Falling back to a search query for 'trending' which is a reasonable approximation.
+        """
+        try:
+            # Fallback strategy since Trending is not available
+            return self.search_videos("trending", max_results=10)
+        except Exception as e:
+            logger.error(f"Scraper Trending error: {e}")
+            return []

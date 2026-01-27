@@ -1,5 +1,5 @@
 from fastmcp import FastMCP
-from src.tools import search, content, memory
+from src.tools import search, content, memory, analytics, browser
 from src.common.logger import get_logger
 
 logger = get_logger("server")
@@ -15,6 +15,12 @@ content.register(mcp)
 
 logger.info("Registering memory tools...")
 memory.register(mcp)
+
+logger.info("Registering analytics tools...")
+analytics.register(mcp)
+
+logger.info("Registering browser tools...")
+browser.register(mcp)
 
 def main():
     logger.info("Starting YouTube Ultimate MCP Server...")

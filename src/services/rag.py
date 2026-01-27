@@ -26,26 +26,58 @@ class RAGService:
     def embed_text(self, text: str) -> np.ndarray:
         return self.model.encode(text)
 
-    def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
-        # Simple character based chunking for now
+    def chunk_transcript(self, transcript: List[Dict[str, Any]], chunk_size: int = 1000) -> List[Dict[str, Any]]:
+        """
+        Chunk transcript items while preserving timestamps.
+        transcript: List of {text, start, duration}
+        """
         chunks = []
-        start = 0
-        while start < len(text):
-            end = start + chunk_size
-            chunks.append(text[start:end])
-            start += (chunk_size - overlap)
+        current_chunk = []
+        current_length = 0
+        chunk_start = 0.0
+
+        for item in transcript:
+            text = item["text"]
+            start = item["start"]
+            duration = item["duration"]
+
+            if not current_chunk:
+                chunk_start = start
+
+            current_chunk.append(text)
+            current_length += len(text)
+
+            if current_length >= chunk_size:
+                chunks.append({
+                    "text": " ".join(current_chunk),
+                    "start": chunk_start,
+                    "end": start + duration
+                })
+                current_chunk = []
+                current_length = 0
+
+        if current_chunk:
+            chunks.append({
+                "text": " ".join(current_chunk),
+                "start": chunk_start,
+                "end": transcript[-1]["start"] + transcript[-1]["duration"]
+            })
+
         return chunks
 
-    def add_video(self, video_id: str, text: str, metadata: Dict[str, Any]):
+    def add_video(self, video_id: str, transcript: List[Dict[str, Any]], metadata: Dict[str, Any]):
         try:
-            chunks = self.chunk_text(text)
-            embeddings = self.model.encode(chunks)
+            chunks = self.chunk_transcript(transcript)
+            texts = [c["text"] for c in chunks]
+            embeddings = self.model.encode(texts)
 
             data = []
             for i, chunk in enumerate(chunks):
                 data.append({
                     "video_id": video_id,
-                    "text": chunk,
+                    "text": chunk["text"],
+                    "start": chunk["start"],
+                    "end": chunk["end"],
                     "vector": embeddings[i],
                     "chunk_id": i,
                     **metadata
