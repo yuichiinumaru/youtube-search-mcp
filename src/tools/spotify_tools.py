@@ -78,6 +78,10 @@ def spotify_get_liked_songs(limit: int = 20, offset: int = 0) -> Dict[str, Any]:
     """Get tracks from the current user's 'Liked Songs' collection."""
     return spotify_service.get_liked_songs(limit, offset)
 
+    types: List of types to search for (e.g., ["track", "artist"]).
+    """
+    return spotify_service.search(query, types, limit)
+
 def spotify_get_track_details(track_id: str) -> Dict[str, Any]:
     """Get detailed metadata for a Spotify track."""
     return spotify_service.get_track(track_id)
